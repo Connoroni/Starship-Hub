@@ -1,40 +1,43 @@
+"use server";
+
+import { auth } from "@clerk/nextjs/server";
 import { db } from "@/utils/dbConnectionString";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+
 export default async function UserPage({ params }) {
-    const slug = await params;
-    console.log(slug);
-    const user = await db.query(`SELECT * FROM users WHERE id=$1`, [slug.id]);
+  const { userId } = await auth();
+  if (!userId) {
+    return notFound();
+  }
 
-    const wrangledUser = user.rows;
-    console.log(wrangledUser);
+  const slug = await params;
+  console.log(slug);
+  const userData = await db.query(`SELECT * FROM users WHERE id=$1`, [slug.id]);
 
-    if (wrangledUser.length===0) {
-        notFound();
-    }
+  const wrangledUser = userData.rows;
+  console.log(wrangledUser);
 
+  if (wrangledUser.length === 0) {
+    notFound();
+  }
 
-    return (
+  return (
     <>
-    <h1>User Profile {slug.id}</h1> 
-    {wrangledUser.map((oneUser) => (
+      <h1>User Profile {slug.id}</h1>
+      {wrangledUser.map((oneUser) => (
         <div key={oneUser.id}>
-            <h2>
-                Username: {oneUser.username}
-            </h2>
-            <h2>
-                Email: {oneUser.email}
-            </h2>
-            <Image src={oneUser.profile_pic} alt="Users profile picture" width="200" height="200"/>
-            <h2>
-                Bio: {oneUser.bio}
-            </h2>
-
+          <h2>Username: {oneUser.username}</h2>
+          <h2>Email: {oneUser.email}</h2>
+          <Image
+            src={oneUser.profile_pic}
+            alt="Users profile picture"
+            width="200"
+            height="200"
+          />
+          <h2>Bio: {oneUser.bio}</h2>
         </div>
-    ))}
+      ))}
     </>
-    )
-
-
-
+  );
 }
